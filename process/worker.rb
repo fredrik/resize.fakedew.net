@@ -1,20 +1,8 @@
 require 'resque'
 require 'rmagick'
+require 'securerandom'
 
-
-class SomeJob
-  @queue = :some
-
-  def self.perform(params)
-    # pick up an image, resize and  and store it.
-    puts 'yep'
-    f = open('/tmp/x', 'a')
-    f.write "#{Time.now} => yeah\n"
-    f.close
-  end
-
-end
-
+require '../schema'
 
 
 def log(message)
@@ -31,22 +19,30 @@ class ResizeJob
 
     log "about to process #{params['image']}"
 
-    resize(params['image'])
+    filename = SecureRandom.hex
+    full_path = File.join(DATA_PATH, filename)
 
-    return true
+    # TODO: failure handling
+    resize(params['image'], full_path)
+
+    # TODO: failure handling
+    Image.create(
+      sender: nil, # TODO
+      filename: filename,
+      created_at: Time.now
+    )
+
+    log("wrote resized image to #{full_path}")
+
+    true
   end
 end
 
 
-
-
-
 WIDTH = 400
 HEIGHT = 300
-def resize(path)
-  target = '/tmp/yeah.png'
-
-  i = Magick::Image.read(path).first
-  puts i
-  i.resize_to_fill(WIDTH, HEIGHT).write(target)
+def resize(source, target)
+  Magick::Image.read(source).first
+               .resize_to_fill(WIDTH, HEIGHT)
+               .write(target)
 end

@@ -2,7 +2,7 @@
 
 require 'sinatra'
 
-require './schema'
+require '../schema'
 
 
 get '/' do
