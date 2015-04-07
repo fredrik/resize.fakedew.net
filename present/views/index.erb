@@ -1,0 +1,6 @@
+all the images
+
+<% @images.each do |image| %>
+  <h3><%= image.sender %></h3>
+  <img src="<%= image.path %>">
+<% end %>
