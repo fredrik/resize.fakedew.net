@@ -1,0 +1,4 @@
+process:
+
+INTERVAL=1 VERBOSE=true QUEUE=resize rake resque:work
+

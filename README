@@ -1,0 +1,19 @@
+
+
+requirements:
+
+$> brew install imagemagick
+
+
+
+
+
+
+
+Improvements:
+
+Selecting which area of the image to crop. ImageMagick comes with a number of defaults. Depending on the application, we could also use image recognition algorithms to pick an especially interesting area (say, a person's face or a group of footballers fighting over possession).
+
+Giving each user a unique incoming email address, e.g. resize+fredrik@fakedew.net. It's quite easy to forge the sender and/or From field after all.
+
+`rackup config.ru`
