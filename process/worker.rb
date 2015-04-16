@@ -1,48 +1,47 @@
 require 'resque'
-require 'rmagick'
+require 'resque/errors'
 require 'securerandom'
 
-require '../schema'
+require_relative '../schema'
+require_relative './image_fetcher'
+require_relative './resizer'
 
+MAILGUN_USER = ENV.fetch('MAILGUN_USER')
+MAILGUN_PASSWORD = ENV.fetch('MAILGUN_PASSWORD')
 
-def log(message)
-  puts "#{Time.now} #{message}"
-end
 
 class ResizeJob
   @queue = :resize
 
-  def self.perform(params)
-    unless params.key?('image')
-      raise 'missing argument :image'
-    end
+  def self.perform(sender, attachment)
+    # go to work on an image:
+    # fetch it, resize it, store it.
 
-    log "about to process #{params['image']}"
+    log("got job: #{attachment}")
 
     filename = SecureRandom.hex
-    full_path = File.join(DATA_PATH, filename)
+    target_path = File.join(DATA_PATH, filename)
 
-    # TODO: failure handling
-    resize(params['image'], full_path)
+    image = ImageFetcher.fetch(attachment['url'], MAILGUN_USER, MAILGUN_PASSWORD)
+    resized_image = Resizer.resize(image)
+    resized_image.write(target_path)
 
-    # TODO: failure handling
     Image.create(
-      sender: nil, # TODO
+      sender: sender,
       filename: filename,
+      content_type: attachment['content-type'],
       created_at: Time.now
     )
 
-    log("wrote resized image to #{full_path}")
+    log("finished job.")
 
     true
+  rescue Resque::TermException => e
+    log "lots of bork right here: #{e}"
   end
 end
 
 
-WIDTH = 400
-HEIGHT = 300
-def resize(source, target)
-  Magick::Image.read(source).first
-               .resize_to_fill(WIDTH, HEIGHT)
-               .write(target)
+def log(message)
+  puts "#{Time.now} #{message}"
 end
