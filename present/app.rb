@@ -2,7 +2,7 @@
 
 require 'sinatra'
 
-require '../schema'
+require_relative '../schema'
 
 
 get '/' do
@@ -10,10 +10,10 @@ get '/' do
   erb :index
 end
 
-
 # naughty way of serving files
+# TODO: nginx or S3
 get '/images/:image' do
-  # TODO: how expose `DATA_PATH`?
+  return 404 if params[:image].include?('..')
   full_path = File.join(DATA_PATH, params[:image])
   send_file(full_path, :disposition => 'inline')
 end
