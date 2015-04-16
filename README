@@ -1,34 +1,61 @@
++ RESIZE +
+
+A state-of-the-art image resizer.
+
+resize@fakedew.net => http://resize.fakedew.net/
 
 
-usage:
+
+# usage:
 
   $> foreman start
 
 
-requirements:
+# requirements:
 
   $> brew install postgresql
   $> brew install imagemagick
 
 
+# Background & reasoning:
+
+I have 'architected' this system into three distinct component:
+ + a receiver of email notifications, which simply farms out image resizing jobs
+ + a worker whose job it is to fetch an image, resize it and store image data and meta data
+ + a presentation layer that presents a gallery of images to the user
 
 
-TODO:
+Initially, I assumed I would receive the full image payload in my webhook receiver, which would have been fine although it would have been somewhat annoying to transfer the binary image data between receiver and worker. I then found Mailgun's `store` route option and loved it: I get notified that there is an email and the payload simply contains a list of URLs where I can fetch the attachments? Lovely!
+
+I chose Sinatra as a web server, both for the webhook receiver and presentation layer, simply because it is so simple and straight forward to use. I knew I needed a POST receiver
+
+I use Data Mapper as an ORM partly because I've never used it before. I was looking for something lightweight and Data Mapper seemed to fit the bill. It's only used to store a single kind of data — no relations are involved, and I was initally considering using a document store. Postgres could be replaced with SQLite to reduce the number of dependent services.
+
+I chose Faraday for a HTTP client simply because net-http and open-uri weren't easy enough to use: basic auth in net-http look awful and I'm not sure that open-uri even supports it. Faraday on the other hand is a delight! It reminds me of the excellent `requests` library in Python.
+
+Resque, the queue-based worker library, provides the muscle. ResizeJob takes a single attachment (a Hash keyed by url, content-type, etc -- I didn't see a need to modify or even verify the attachment data structure provided by Mailgun, although I do admit that letting Mailgun's API bleed into the worker class might be considered a smell) and downloads the image, resizes it using ImageMagick's default 'resize_to_fill' algorithm, and stores the image on disk and the meta data in Postgres. Ideally the image should be stored on and served from S3 so that I don't have to care about file systems and can scale out to multiple workers, avoid having the presentation layer have access to the same file system as the worker, etc.
+
+I've deployed the apps behind Nginx on a Linode instance. Send an email to resize@fakedew.net and your png or jpg attachment will end up at http://resize.fakedew.net!
+
+
+
+
+# TODO:
 
 + All the TODOs in the code
 + Documentation of nginx setup
 
 
-Improvements:
-
-Procfile
+# Improvements:
 
 Store images on S3
 
 Selecting which area of the image to crop. ImageMagick comes with a number of defaults that we could pick from. Depending on the application, we could also use a fancy image recognition algorithm to pick an especially interesting area (say, a person's face or a group of footballers fighting over possession).
 
+Improving the presentation(!)
+
 Giving each user a unique incoming email address, e.g. resize+fredrik@fakedew.net. It's quite easy to forge the sender and/or From field after all.
 
 `rackup config.ru` -- see ~/src/resque/examples/demo
 
-More explicit error handling, especially in the Sinatra app.
+More fine grained error handling, especially in the Sinatra app.
