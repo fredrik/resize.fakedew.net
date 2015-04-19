@@ -1,14 +1,9 @@
-ENV['RACK_ENV'] = 'test'
 require 'rspec'
 require 'rack/test'
 require 'resque_spec'
 
-# setup
-ENV['DATABASE_URL'] = 'postgres://localhost/resize_test'
-ENV['RESIZE_DATA_PATH'] = '/tmp/resize_test'
-
 require_relative '../receive/app'
-require_relative '../process/worker'
+require_relative '../process/resize_job'
 
 
 describe 'webhook app' do

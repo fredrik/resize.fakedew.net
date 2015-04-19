@@ -2,7 +2,7 @@ require 'sinatra'
 require 'resque'
 
 require_relative './attachments_helper'
-require_relative '../process/worker'
+require_relative '../process/resize_job'
 
 
 # set up worker queue

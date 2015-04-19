@@ -1,6 +1,7 @@
 require 'resque'
 require 'resque/errors'
 require 'securerandom'
+require 'logger'
 
 require_relative '../schema'
 require_relative './image_fetcher'
@@ -24,7 +25,7 @@ class ResizeJob
     filename = SecureRandom.hex
     target_path = File.join(DATA_PATH, filename)
 
-    image = ImageFetcher.fetch(attachment['url'], MAILGUN_USER, MAILGUN_PASSWORD)
+    image = ImageFetcher.fetch(attachment.fetch('url'), MAILGUN_USER, MAILGUN_PASSWORD)
     resized_image = Resizer.resize(image)
     resized_image.write(target_path)
 
@@ -36,7 +37,6 @@ class ResizeJob
     )
 
     log("finished job.")
-
     true
   rescue Resque::TermException => e
     log "lots of bork right here: #{e}"
