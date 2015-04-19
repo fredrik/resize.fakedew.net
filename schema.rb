@@ -28,4 +28,3 @@ class Image
 end
 
 DataMapper.finalize
-Image.auto_upgrade!
