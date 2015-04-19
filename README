@@ -18,6 +18,10 @@ resize@fakedew.net => http://resize.fakedew.net/
   $> brew install imagemagick
 
 
+# testing
+
+Specs are written for RSpec. Uses `resque_spec` (https://github.com/leshill/resque_spec) for mocking out Resque. Uses `Rack::Test::Methods` to test Sinatra.
+
 # Background & reasoning:
 
 I have 'architected' this system into three distinct component:
