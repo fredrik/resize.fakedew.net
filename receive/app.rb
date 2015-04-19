@@ -1,14 +1,9 @@
 require 'sinatra'
 require 'resque'
 
+require_relative './attachments_helper'
 require_relative '../process/worker'
 
-
-# accepted attachement content-types
-DESIRABLE_CONTENT_TYPES = [
-  'image/png',
-  'image/jpeg'
-]
 
 # set up worker queue
 Resque.redis = Redis.new
@@ -48,17 +43,6 @@ post '/resize/notify' do
   end
 
   200 # ok
-end
-
-
-def parse_attached_images(attachments_data)
-  # parse the json structure and filter out any non-image attachments.
-  # returns a list of hashes, one hash for each image. as defined by the
-  # the Mailgun API, they are keyed by url, name, size and content-type.
-  attachments = JSON.parse(attachments_data)
-  attachments.select { |a|
-    DESIRABLE_CONTENT_TYPES.include?(a['content-type'])
-  }
 end
 
 def log(message)
