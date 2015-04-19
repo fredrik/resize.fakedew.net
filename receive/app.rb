@@ -22,29 +22,25 @@ post '/resize/notify' do
   # or any other status code to have Mailgun retry the notifiation later.
   # see https://documentation.mailgun.com/user_manual.html#routes for more.
 
-  log("incoming from #{params['sender']}")
+  logger.info("incoming from #{params['sender']}")
 
   begin
     sender = params.fetch('sender')
     attachments = parse_attached_images(params.fetch('attachments'))
   rescue => e
-    log("bad request, rejecting: #{e}")
+    logger.info("bad request, rejecting: #{e}")
     return 406  # reject
   end
 
   begin
     attachments.each do |attachment|
-      log("posting job: #{attachment}")
+      logger.info("posting job: #{attachment}")
       Resque.enqueue(ResizeJob, sender, attachment)
     end
   rescue => e
-    log("ERROR: #{e}")
+    logger.info("ERROR: #{e}")
     return 500  # please retry
   end
 
   200 # ok
-end
-
-def log(message)
-  puts "#{Time.now} #{message}"
 end
