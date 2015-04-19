@@ -1,13 +1,10 @@
-
 require_relative '../../process/resizer'
-
-afghan_girl_path = File.expand_path(
-  'fixtures/afghan-girl.jpg', File.dirname(__FILE__)
-)
 
 describe Resizer do
   let(:subject) { Resizer }
-  let(:image_blob) { File.read(afghan_girl_path) }
+  let(:image_blob) {
+   File.read(File.expand_path('fixtures/afghan-girl.jpg', File.dirname(__FILE__)))
+ }
 
   it 'responds to #resize' do
     expect(subject).to respond_to(:resize)
@@ -18,10 +15,21 @@ describe Resizer do
   end
 
   it 'resizes an image to 400x300 pixels' do
-    image = Resizer.resize(image_blob)
+    i = Resizer.resize(image_blob)
 
-    expect(image.format).to eq("JPEG")
-    expect(image.columns).to eq(400)
-    expect(image.rows).to eq(300)
+    expect(i.format).to eq("JPEG")
+    expect(i.columns).to eq(400)
+    expect(i.rows).to eq(300)
+  end
+
+  it 'adds a 10 pixel black border' do
+    i = Resizer.resize(image_blob)
+
+    # grab a row of ten pixels at the very left and right edges
+    expect(i.dispatch(0,        HEIGHT/2, 10, 1, 'RGB', true)).to eq([0.0] * 30)
+    expect(i.dispatch(WIDTH-10, HEIGHT/2, 10, 1, 'RGB', true)).to eq([0.0] * 30)
+    # grab a column of ten pixels at the very top and bottom
+    expect(i.dispatch(WIDTH/2,         0, 1, 10, 'RGB', true)).to eq([0.0] * 30)
+    expect(i.dispatch(WIDTH/2, HEIGHT-10, 1, 10, 'RGB', true)).to eq([0.0] * 30)
   end
 end
