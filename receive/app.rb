@@ -1,13 +1,9 @@
 require 'sinatra'
+require 'resque'
 
-require_relative '../process/worker'
+require_relative './attachments_helper'
+require_relative '../process/resize_job'
 
-
-# accepted attachement content-types
-DESIRABLE_CONTENT_TYPES = [
-  'image/png',
-  'image/jpeg'
-]
 
 # set up worker queue
 Resque.redis = Redis.new
@@ -15,10 +11,6 @@ Resque.redis = Redis.new
 
 get '/' do
   'OK'
-end
-
-get '/resize' do
-  'resizer!'
 end
 
 post '/resize/notify' do
@@ -30,40 +22,25 @@ post '/resize/notify' do
   # or any other status code to have Mailgun retry the notifiation later.
   # see https://documentation.mailgun.com/user_manual.html#routes for more.
 
-  log("incoming from #{params['sender']}")
+  logger.info("incoming from #{params['sender']}")
 
   begin
-    sender = params['sender']
-    attachments = parse_attached_images(params['attachments'])
+    sender = params.fetch('sender')
+    attachments = parse_attached_images(params.fetch('attachments'))
   rescue => e
-    log("bad request, rejecting: #{e}")
+    logger.info("bad request, rejecting: #{e}")
     return 406  # reject
   end
 
   begin
     attachments.each do |attachment|
-      log("posting job: #{attachment}")
+      logger.info("posting job: #{attachment}")
       Resque.enqueue(ResizeJob, sender, attachment)
     end
   rescue => e
-    log("ERROR: #{e}")
+    logger.info("ERROR: #{e}")
     return 500  # please retry
   end
 
   200 # ok
-end
-
-
-def parse_attached_images(attachments_data)
-  # parse the json structure and filter out any non-image attachments.
-  # returns a list of hashes, one hash for each image. as defined by the
-  # the Mailgun API, they are keyed by url, name, size and content-type.
-  attachments = JSON.parse(attachments_data)
-  attachments.select { |a|
-    DESIRABLE_CONTENT_TYPES.include?(a['content-type'])
-  }
-end
-
-def log(message)
-  puts "#{Time.now} #{message}"
 end

@@ -1,2 +1,2 @@
 require 'resque/tasks'
-require './worker'
+require './resize_job'

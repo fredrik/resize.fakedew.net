@@ -1,13 +1,16 @@
 require 'resque'
 require 'resque/errors'
 require 'securerandom'
+require 'logger'
 
 require_relative '../schema'
 require_relative './image_fetcher'
 require_relative './resizer'
 
-MAILGUN_USER = ENV.fetch('MAILGUN_USER')
-MAILGUN_PASSWORD = ENV.fetch('MAILGUN_PASSWORD')
+
+# used for HTTP basic auth when fetching attachments
+MAILGUN_USER = ENV.fetch('MAILGUN_USER', '')
+MAILGUN_PASSWORD = ENV.fetch('MAILGUN_PASSWORD', '')
 
 
 class ResizeJob
@@ -22,7 +25,7 @@ class ResizeJob
     filename = SecureRandom.hex
     target_path = File.join(DATA_PATH, filename)
 
-    image = ImageFetcher.fetch(attachment['url'], MAILGUN_USER, MAILGUN_PASSWORD)
+    image = ImageFetcher.fetch(attachment.fetch('url'), MAILGUN_USER, MAILGUN_PASSWORD)
     resized_image = Resizer.resize(image)
     resized_image.write(target_path)
 
@@ -34,7 +37,6 @@ class ResizeJob
     )
 
     log("finished job.")
-
     true
   rescue Resque::TermException => e
     log "lots of bork right here: #{e}"
