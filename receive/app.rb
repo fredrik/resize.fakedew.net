@@ -1,4 +1,5 @@
 require 'sinatra'
+require 'resque'
 
 require_relative '../process/worker'
 
@@ -17,10 +18,6 @@ get '/' do
   'OK'
 end
 
-get '/resize' do
-  'resizer!'
-end
-
 post '/resize/notify' do
   # receives a 'store' notification from Mailgun.
   # enqueue a set of ResizeJob workers, one for each image attachment.
@@ -33,8 +30,8 @@ post '/resize/notify' do
   log("incoming from #{params['sender']}")
 
   begin
-    sender = params['sender']
-    attachments = parse_attached_images(params['attachments'])
+    sender = params.fetch('sender')
+    attachments = parse_attached_images(params.fetch('attachments'))
   rescue => e
     log("bad request, rejecting: #{e}")
     return 406  # reject

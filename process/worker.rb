@@ -6,8 +6,10 @@ require_relative '../schema'
 require_relative './image_fetcher'
 require_relative './resizer'
 
-MAILGUN_USER = ENV.fetch('MAILGUN_USER')
-MAILGUN_PASSWORD = ENV.fetch('MAILGUN_PASSWORD')
+
+# used for HTTP basic auth when fetching attachments
+MAILGUN_USER = ENV.fetch('MAILGUN_USER', '')
+MAILGUN_PASSWORD = ENV.fetch('MAILGUN_PASSWORD', '')
 
 
 class ResizeJob

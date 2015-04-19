@@ -13,6 +13,7 @@ resize@fakedew.net => http://resize.fakedew.net/
 
 # requirements:
 
+  $> brew install redis
   $> brew install postgresql
   $> brew install imagemagick
 
